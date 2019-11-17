@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace FinancialApi.Models
 {
@@ -14,5 +11,17 @@ namespace FinancialApi.Models
         public DateTime Birthday { get; set; }
         public double Balance { get; set; }
 
+        public static Account CreateFromRequest(AccountRequest request)
+        {
+            return new Account()
+            {
+                Id = Guid.NewGuid(),
+                LastName = request.LastName,
+                FirstName = request.FirstName,
+                Patronymic = request.Patronymic,
+                Birthday = request.Birthday,
+                Balance = 0
+            };
+        }
     }
 }

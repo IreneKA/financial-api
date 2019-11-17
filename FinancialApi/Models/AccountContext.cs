@@ -8,7 +8,7 @@ namespace FinancialApi.Models
 {
     public class AccountContext:DbContext
     {
-        public AccountContext(DbContextOptions<AccountContext> options)
+        public AccountContext(DbContextOptions options)
             : base(options)
         { }
 

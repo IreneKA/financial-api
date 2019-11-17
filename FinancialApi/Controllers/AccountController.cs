@@ -1,107 +1,112 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using FinancialApi.Models;
+using FinancialApi.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace FinancialApi.Controllers
 {
-    [Route("api/[controller]/[action]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly AccountContext _context;
+        private readonly IAccountService service;
 
-        public AccountController(AccountContext context)
+        public AccountController(IAccountService service)
         {
-            _context = context;
+            this.service = service;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Account>>> GetAccounts()
         {
-            return await _context.Accounts.ToListAsync();
+            var accounts = await service.GetAccounts();
+            return Ok(accounts);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}/balance")]
         public async Task<ActionResult<double>> GetBalance(Guid id)
         {
-            var account = await _context.Accounts.FindAsync(id);
-
-            if (account == null)
+            try
             {
-                return NotFound();
+                var balance = await service.GetBalance(id);
+                return Ok(balance);
             }
-
-            return account.Balance;
+            catch (Exception e)
+            {
+                return NotFound(e.Message);
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Account>> GetAccount(Guid id)
         {
-            var account = await _context.Accounts.FindAsync(id);
-
-            if (account == null)
+            try
             {
-                return NotFound();
+                var account = await service.GetAccount(id);
+                return Ok(account);
             }
-
-            return account;
+            catch (Exception e)
+            {
+                return NotFound(e.Message);
+            }
         }
 
         [HttpPost]
-        public async Task<ActionResult<Account>> PostAccount(Account account)
+        public async Task<ActionResult<Account>> PostAccount(AccountRequest request)
         {
-            _context.Accounts.Add(account);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetAccount), new { id = account.Id }, account);
+            try
+            {
+                var account = await service.RegisterAccount(request);
+                return Ok(account);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutAccount(Guid id, Account account)
+        [HttpPatch("{id}/increase")]
+        public async Task<ActionResult> Increase(Guid id, [FromBody] double count)
         {
-            if (id != account.Id)
+            try
             {
-                return BadRequest();
+                await service.Increase(id, count);
+                return Ok();
             }
-
-            _context.Entry(account).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception e)
+            {
+                return NotFound(e.Message);
+            }
         }
 
-        [HttpPatch("{id}")]
-        public async Task<IActionResult> PatchBalance(Guid id, Account account)
+        [HttpPatch("{id}/reduce")]
+        public async Task<ActionResult> Reduce(Guid id, [FromBody] double count)
         {
-            if (account == null)
+            try
             {
-                return NotFound();
+                await service.Reduce(id, count);
+                return Ok();
             }
-
-            _context.Entry(account).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception e)
+            {
+                return NotFound(e.Message);
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAccount(Guid id)
         {
-            var account = await _context.Accounts.FindAsync(id);
-
-            if (account == null)
+            try
             {
-                return NotFound();
+                await service.DeleteAccount(id);
+                return Ok();
             }
-
-            _context.Accounts.Remove(account);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception e)
+            {
+                return NotFound(e.Message);
+            }
         }
     }
 }
